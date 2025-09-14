@@ -272,6 +272,24 @@ class MenuTranslator {
             return;
         }
         
+        // Check file sizes before upload
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        const MAX_TOTAL_SIZE = 50 * 1024 * 1024; // 50MB
+        
+        let totalSize = 0;
+        for (const file of this.selectedFiles) {
+            if (file.size > MAX_FILE_SIZE) {
+                this.showToast(`File "${file.name}" is too large. Maximum size is 10MB per file.`, 'error');
+                return;
+            }
+            totalSize += file.size;
+        }
+        
+        if (totalSize > MAX_TOTAL_SIZE) {
+            this.showToast('Total file size is too large. Maximum total size is 50MB.', 'error');
+            return;
+        }
+        
         const formData = new FormData();
         
         // Add form fields
@@ -287,42 +305,97 @@ class MenuTranslator {
         this.setLoadingState(true);
         this.showToast('Analyzing menu...', 'info');
         
-        try {
-            const response = await fetch('/analyze_menu', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+        // Retry mechanism
+        const maxRetries = 3;
+        let retryCount = 0;
+        
+        while (retryCount < maxRetries) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes timeout
+                
+                const response = await fetch('/analyze_menu', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    
+                    // Handle specific error types
+                    if (response.status === 413) {
+                        throw new Error('File size too large. Please reduce image size and try again.');
+                    } else if (response.status === 429) {
+                        throw new Error('API quota exceeded. Please check your OpenAI billing and usage limits.');
+                    } else if (response.status === 401) {
+                        throw new Error('API authentication failed. Please check your OpenAI API key.');
+                    } else if (response.status >= 500) {
+                        // Server error - retry
+                        throw new Error(`Server error (${response.status}). Retrying...`);
+                    } else {
+                        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                    }
+                }
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    if (data.error_type === 'quota_exceeded') {
+                        throw new Error('API quota exceeded. Please check your OpenAI billing and usage limits.');
+                    } else if (data.error_type === 'auth_error') {
+                        throw new Error('API authentication failed. Please check your OpenAI API key.');
+                    } else {
+                        throw new Error(data.error);
+                    }
+                }
+                
+                this.currentMenuData = data;
+                this.displayResults(data);
+                this.showToast('Menu analysis completed successfully!', 'success');
+                
+                // Haptic feedback for success
+                if ('vibrate' in navigator) {
+                    navigator.vibrate([100, 50, 100]);
+                }
+                
+                return; // Success, exit retry loop
+                
+            } catch (error) {
+                console.error(`Error analyzing menu (attempt ${retryCount + 1}):`, error);
+                
+                // Check if it's a retryable error
+                const isRetryable = error.message.includes('Server error') || 
+                                  error.message.includes('network') ||
+                                  error.name === 'AbortError' ||
+                                  error.message.includes('fetch');
+                
+                if (isRetryable && retryCount < maxRetries - 1) {
+                    retryCount++;
+                    this.showToast(`Upload failed. Retrying... (${retryCount}/${maxRetries})`, 'warning');
+                    await new Promise(resolve => setTimeout(resolve, 2000 * retryCount)); // Exponential backoff
+                    continue;
+                } else {
+                    // Final error
+                    let errorMessage = error.message;
+                    if (error.name === 'AbortError') {
+                        errorMessage = 'Upload timed out. Please try with smaller images or check your connection.';
+                    }
+                    
+                    this.showToast(`Error analyzing menu: ${errorMessage}`, 'error');
+                    
+                    // Haptic feedback for error
+                    if ('vibrate' in navigator) {
+                        navigator.vibrate([200, 100, 200]);
+                    }
+                    break;
+                }
             }
-            
-            const data = await response.json();
-            
-            if (data.error) {
-                throw new Error(data.error);
-            }
-            
-            this.currentMenuData = data;
-            this.displayResults(data);
-            this.showToast('Menu analysis completed successfully!', 'success');
-            
-            // Haptic feedback for success
-            if ('vibrate' in navigator) {
-                navigator.vibrate([100, 50, 100]);
-            }
-            
-        } catch (error) {
-            console.error('Error analyzing menu:', error);
-            this.showToast(`Error analyzing menu: ${error.message}`, 'error');
-            
-            // Haptic feedback for error
-            if ('vibrate' in navigator) {
-                navigator.vibrate([200, 100, 200]);
-            }
-        } finally {
-            this.setLoadingState(false);
         }
+        
+        this.setLoadingState(false);
     }
 
     // Results display

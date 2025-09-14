@@ -302,20 +302,100 @@ async def analyze_menu(
     allergy_info: Optional[str] = Form(None),  # comma-separated list, optional
     images: List[UploadFile] = File(None)
 ):
-    user_allergies = [a.strip() for a in (allergy_info or "").split(",") if a.strip()]
-    # Build multimodal input: text + images
-    blobs, mimes = [], []
-    for f in images:
-        data = await f.read()
-        blobs.append(data)
-        mimes.append(f.content_type or "image/jpeg")
+    try:
+        # Validate inputs
+        if not images or len(images) == 0:
+            return JSONResponse({
+                "error": "No images provided",
+                "error_type": "validation_error"
+            }, status_code=400)
+        
+        # Check file size limits (Railway typically has 10MB limit per file)
+        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+        MAX_TOTAL_SIZE = 50 * 1024 * 1024  # 50MB total
+        
+        total_size = 0
+        for f in images:
+            if f.size and f.size > MAX_FILE_SIZE:
+                return JSONResponse({
+                    "error": f"File {f.filename} is too large. Maximum size is 10MB per file.",
+                    "error_type": "file_too_large"
+                }, status_code=413)
+            total_size += f.size or 0
+        
+        if total_size > MAX_TOTAL_SIZE:
+            return JSONResponse({
+                "error": "Total file size is too large. Maximum total size is 50MB.",
+                "error_type": "total_size_too_large"
+            }, status_code=413)
+        
+        user_allergies = [a.strip() for a in (allergy_info or "").split(",") if a.strip()]
+        
+        # Build multimodal input: text + images
+        blobs, mimes = [], []
+        for f in images:
+            try:
+                data = await f.read()
+                if len(data) == 0:
+                    continue  # Skip empty files
+                blobs.append(data)
+                mimes.append(f.content_type or "image/jpeg")
+            except Exception as e:
+                print(f"Error reading file {f.filename}: {e}")
+                return JSONResponse({
+                    "error": f"Error reading file {f.filename}: {str(e)}",
+                    "error_type": "file_read_error"
+                }, status_code=400)
+        
+        if len(blobs) == 0:
+            return JSONResponse({
+                "error": "No valid image files found",
+                "error_type": "no_valid_files"
+            }, status_code=400)
 
-    content_parts = _build_content_parts(target_language, user_allergies, ocr_text, currency, blobs, mimes)
+        content_parts = _build_content_parts(target_language, user_allergies, ocr_text, currency, blobs, mimes)
 
-    tool_args, raw = call_model(content_parts)
-    if tool_args is None:
-        return JSONResponse({"error": "No tool call returned", "raw": raw.model_dump()}, status_code=502)
-    return JSONResponse(tool_args)
+        tool_args, raw = call_model(content_parts)
+        if tool_args is None:
+            # Check if raw contains error information
+            if isinstance(raw, dict) and "error" in raw:
+                error_type = raw.get("error_type", "Unknown")
+                error_msg = raw.get("error", "Unknown error")
+                
+                # Handle specific OpenAI errors
+                if "RateLimitError" in error_type or "insufficient_quota" in error_msg:
+                    return JSONResponse({
+                        "error": "API quota exceeded. Please check your OpenAI billing and usage limits.",
+                        "error_type": "quota_exceeded",
+                        "details": error_msg
+                    }, status_code=429)
+                elif "AuthenticationError" in error_type:
+                    return JSONResponse({
+                        "error": "API authentication failed. Please check your OpenAI API key.",
+                        "error_type": "auth_error",
+                        "details": error_msg
+                    }, status_code=401)
+                else:
+                    return JSONResponse({
+                        "error": f"API error: {error_msg}",
+                        "error_type": error_type,
+                        "details": error_msg
+                    }, status_code=502)
+            else:
+                # Handle case where raw is a response object
+                try:
+                    raw_data = raw.model_dump() if hasattr(raw, 'model_dump') else str(raw)
+                except:
+                    raw_data = "Unable to serialize response"
+                return JSONResponse({"error": "No tool call returned", "raw": raw_data}, status_code=502)
+        return JSONResponse(tool_args)
+    
+    except Exception as e:
+        print(f"❌ Unexpected error in analyze_menu: {e}")
+        return JSONResponse({
+            "error": f"Internal server error: {str(e)}",
+            "error_type": "internal_error"
+        }, status_code=500)
 
 # ------------------------- CLI runner -------------------------
 
