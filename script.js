@@ -45,7 +45,12 @@ class MenuTranslator {
         this.elements.uploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
         this.elements.uploadArea.addEventListener('dragleave', (e) => this.handleDragLeave(e));
         this.elements.uploadArea.addEventListener('drop', (e) => this.handleDrop(e));
-        this.elements.uploadArea.addEventListener('click', () => this.elements.fileInput.click());
+        this.elements.uploadArea.addEventListener('click', (e) => {
+            // Only trigger file input if clicking on the upload area itself, not on buttons
+            if (e.target === this.elements.uploadArea || e.target.closest('.upload-actions') === null) {
+                this.elements.fileInput.click();
+            }
+        });
         
         // Touch events for mobile
         this.elements.uploadArea.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
