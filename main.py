@@ -12,7 +12,15 @@ from openai import OpenAI
 if not os.getenv("OPENAI_API_KEY"):
     load_dotenv()  # 只有在系统环境变量不存在时才加载.env文件
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# 获取API密钥并验证
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    print("❌ Error: OPENAI_API_KEY environment variable is not set!")
+    print("Please set your OpenAI API key in Railway environment variables.")
+    raise ValueError("OPENAI_API_KEY is required")
+
+print("✅ OpenAI API key found, initializing client...")
+client = OpenAI(api_key=api_key)
 
 # --- Define your tool / function schema (JSON Schema) ---
 # Added: user_allergies (top-level), and dish-level allergy_alert.
