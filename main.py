@@ -88,7 +88,6 @@ RETURN_MENU_TOOL = {
                             "enum": ["safe","contains","may_contain","unknown"],
                             "description": "Model judgment relative to user_allergies."
                         },
-                        "confidence": {"type": "number"},
                         "evidence": {
                             "type": "object",
                             "properties": {
@@ -218,13 +217,12 @@ def _render_html(menu_json: dict) -> str:
         <div style="border:1px solid #e5e7eb;border-radius:14px;padding:16px;margin-bottom:14px;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <h3 style="margin:0 0 8px 0;">{name.get('translated') or name.get('src') or 'Dish'}</h3>
-            <span style="background:{aa_color};color:white;padding:4px 10px;border-radius:12px;font-size:12px;">allergy: {aa}</span>
           </div>
           <div style="color:#6b7280;margin-bottom:6px;">{name.get('src','')}</div>
           <div style="margin:8px 0 12px 0;">{desc.get('translated') or desc.get('src') or ''}</div>
           <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px;">
             <div><strong>Allergens (detected):</strong> {allergens_line}</div>
-            <div><strong>Price:</strong> {price.get('amount','')} {price.get('currency', currency) or ''}</div>
+            <div><strong>Price:</strong> {f"{price.get('amount', '')} {price.get('currency', currency) or ''}".strip() if price.get('amount') else '-'}</div>
           </div>
           <div>{chips_html}</div>
         </div>

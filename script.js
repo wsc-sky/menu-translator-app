@@ -4,10 +4,7 @@ class MenuTranslator {
         this.selectedFiles = [];
         this.currentMenuData = null;
         this.swiper = null;
-        this.currentView = 'grid';
-        this.touchStartY = 0;
-        this.touchStartX = 0;
-        this.isScrolling = false;
+        this.elements = {};
         
         this.init();
     }
@@ -28,11 +25,13 @@ class MenuTranslator {
             photoGrid: document.getElementById('photoGrid'),
             swiperWrapper: document.getElementById('swiperWrapper'),
             photoSwiper: document.getElementById('photoSwiper'),
+            thumbsWrapper: document.getElementById('thumbsWrapper'),
             menuForm: document.getElementById('menuForm'),
             analyzeBtn: document.getElementById('analyzeBtn'),
             resultsSection: document.getElementById('resultsSection'),
             resultsContent: document.getElementById('resultsContent'),
-            downloadBtn: document.getElementById('downloadBtn')
+            choosePhotosBtn: document.querySelector('.upload-btn.primary'),
+            takePhotoBtn: document.querySelector('.upload-btn.secondary')
         };
     }
 
@@ -45,22 +44,68 @@ class MenuTranslator {
         this.elements.uploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
         this.elements.uploadArea.addEventListener('dragleave', (e) => this.handleDragLeave(e));
         this.elements.uploadArea.addEventListener('drop', (e) => this.handleDrop(e));
+        
+        // Upload area click handler
         this.elements.uploadArea.addEventListener('click', (e) => {
-            // Only trigger file input if clicking on the upload area itself, not on buttons
-            if (e.target === this.elements.uploadArea || e.target.closest('.upload-actions') === null) {
-                this.elements.fileInput.click();
+            // Only trigger if clicking on the upload area itself, not on buttons
+            if (e.target === this.elements.uploadArea || e.target.closest('.upload-text')) {
+                if (this.elements.fileInput) {
+                    this.elements.fileInput.click();
+                }
             }
         });
-        
-        // Touch events for mobile
-        this.elements.uploadArea.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: true });
-        this.elements.uploadArea.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: true });
         
         // Form submission
         this.elements.menuForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
         
-        // Download button
-        this.elements.downloadBtn.addEventListener('click', () => this.downloadResults());
+        // Language selector events
+        this.initializeLanguageSelector();
+        
+        // Upload buttons with proper event handling
+        if (this.elements.choosePhotosBtn) {
+            this.elements.choosePhotosBtn.addEventListener('click', (e) => {
+                if (this.elements.fileInput) {
+                    this.elements.fileInput.click();
+                }
+            });
+        }
+        
+        if (this.elements.takePhotoBtn) {
+            this.elements.takePhotoBtn.addEventListener('click', (e) => {
+                if (this.elements.cameraInput) {
+                    this.elements.cameraInput.click();
+                }
+            });
+        }
+    }
+
+    initializeLanguageSelector() {
+        const targetLanguageSelect = document.getElementById('targetLanguage');
+        
+        if (!targetLanguageSelect || typeof Choices === 'undefined') {
+            return;
+        }
+        
+        // Initialize Choices.js with search functionality
+        try {
+            this.languageChoices = new Choices(targetLanguageSelect, {
+                searchEnabled: true,
+                searchPlaceholderValue: 'Search languages...',
+                itemSelectText: '',
+                shouldSort: false,
+                position: 'bottom',
+                removeItemButton: false,
+                duplicateItemsAllowed: false,
+                searchResultLimit: 12,
+                searchFields: ['label', 'value'],
+                fuseOptions: {
+                    includeScore: true,
+                    threshold: 0.3
+                }
+            });
+        } catch (error) {
+            console.error('Error initializing language selector:', error);
+        }
     }
 
     initializeMobileOptimizations() {
@@ -93,30 +138,54 @@ class MenuTranslator {
         }
     }
 
-    initializeSwiper() {
-        // Initialize Swiper for photo gallery
-        this.swiper = new Swiper('.photo-swiper', {
-            slidesPerView: 1,
-            spaceBetween: 20,
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-            navigation: {
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
-            },
-            loop: false,
-            effect: 'slide',
-            autoplay: false,
-        });
-    }
+
 
     // File handling methods
     handleFileSelect(event) {
         const files = Array.from(event.target.files);
-        this.addFiles(files);
+        
+        if (files.length > 0) {
+            this.handleFiles(files);
+        }
+        
+        // Reset the input value to allow selecting the same file again
+        setTimeout(() => {
+            event.target.value = '';
+        }, 100);
     }
+
+    handleFiles(files) {
+        const validFiles = Array.from(files).filter(file => {
+            if (!file.type.startsWith('image/')) {
+                this.showToast('请选择图片文件', 'error');
+                return false;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                this.showToast('图片大小不能超过10MB', 'error');
+                return false;
+            }
+            return true;
+        });
+
+        if (validFiles.length === 0) return;
+
+        this.selectedFiles = [...this.selectedFiles, ...validFiles];
+        this.updatePhotoDisplay();
+        this.updateSwiper();
+        this.showToast(`已添加 ${validFiles.length} 张图片`, 'success');
+    }
+    
+    // Detect iOS devices
+    isIOS() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent);
+    }
+    
+    // Detect mobile devices
+    isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+     
+
 
     handleDragOver(event) {
         event.preventDefault();
@@ -136,131 +205,132 @@ class MenuTranslator {
         const imageFiles = files.filter(file => file.type.startsWith('image/'));
         
         if (imageFiles.length !== files.length) {
-            this.showToast('Only image files are allowed.', 'error');
+            this.showToast('photo only', 'error');
         }
         
-        this.addFiles(imageFiles);
+        this.handleFiles(imageFiles);
     }
 
-    handleTouchStart(event) {
-        this.touchStartY = event.touches[0].clientY;
-        this.touchStartX = event.touches[0].clientX;
-        this.isScrolling = false;
-    }
 
-    handleTouchEnd(event) {
-        const touchEndY = event.changedTouches[0].clientY;
-        const touchEndX = event.changedTouches[0].clientX;
-        const deltaY = this.touchStartY - touchEndY;
-        const deltaX = this.touchStartX - touchEndX;
-        
-        if (Math.abs(deltaY) < 10 && Math.abs(deltaX) < 10 && !this.isScrolling) {
-            this.elements.fileInput.click();
-        }
-    }
 
-    addFiles(files) {
-        const imageFiles = files.filter(file => file.type.startsWith('image/'));
-        
-        if (imageFiles.length === 0) {
-            this.showToast('Please select valid image files.', 'error');
-            return;
-        }
-        
-        // Add new files to existing selection
-        this.selectedFiles = [...this.selectedFiles, ...imageFiles];
-        
-        // Limit to 10 files
-        if (this.selectedFiles.length > 10) {
-            this.selectedFiles = this.selectedFiles.slice(0, 10);
-            this.showToast('Maximum 10 images allowed. Only the first 10 will be processed.', 'warning');
-        }
-        
-        this.updatePreview();
-        this.showToast(`${imageFiles.length} photo(s) added successfully!`, 'success');
-        
-        // Haptic feedback
-        if ('vibrate' in navigator) {
-            navigator.vibrate([50, 50, 50]);
-        }
-    }
 
-    updatePreview() {
+
+    updatePhotoDisplay() {
         if (this.selectedFiles.length === 0) {
             this.elements.previewContainer.style.display = 'none';
             return;
         }
-        
+
         this.elements.previewContainer.style.display = 'block';
-        this.renderPhotoGrid();
-        this.renderSwiper();
+        this.updatePhotoGrid();
     }
 
-    renderPhotoGrid() {
+    updatePhotoGrid() {
         this.elements.photoGrid.innerHTML = '';
         
         this.selectedFiles.forEach((file, index) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const photoItem = document.createElement('div');
-                photoItem.className = 'photo-item';
-                photoItem.innerHTML = `
-                    <div class="photo-wrapper">
-                        <img src="${e.target.result}" alt="Photo ${index + 1}" loading="lazy">
-                        <div class="photo-overlay">
-                            <button class="remove-btn" onclick="menuTranslator.removeFile(${index})" title="Remove photo">
-                                <i class="fas fa-times"></i>
-                            </button>
-                            <div class="photo-info">
-                                <span class="photo-number">${index + 1}</span>
-                                <span class="photo-size">${this.formatFileSize(file.size)}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                this.elements.photoGrid.appendChild(photoItem);
-            };
-            reader.readAsDataURL(file);
+            const photoItem = document.createElement('div');
+            photoItem.className = 'photo-item';
+            
+            const photoWrapper = document.createElement('div');
+            photoWrapper.className = 'photo-wrapper';
+            
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.alt = `Photo ${index + 1}`;
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'photo-overlay';
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.innerHTML = '×';
+            removeBtn.onclick = () => this.removeFile(index);
+            
+            overlay.appendChild(removeBtn);
+            photoWrapper.appendChild(img);
+            photoWrapper.appendChild(overlay);
+            photoItem.appendChild(photoWrapper);
+            
+            this.elements.photoGrid.appendChild(photoItem);
         });
-    }
-
-    renderSwiper() {
-        this.elements.swiperWrapper.innerHTML = '';
-        
-        this.selectedFiles.forEach((file, index) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const slide = document.createElement('div');
-                slide.className = 'swiper-slide';
-                slide.innerHTML = `
-                    <div class="slide-content">
-                        <img src="${e.target.result}" alt="Photo ${index + 1}">
-                        <div class="slide-info">
-                            <h4>Photo ${index + 1}</h4>
-                            <p>${this.formatFileSize(file.size)}</p>
-                        </div>
-                    </div>
-                `;
-                this.elements.swiperWrapper.appendChild(slide);
-            };
-            reader.readAsDataURL(file);
-        });
-        
-        // Update Swiper
-        if (this.swiper) {
-            this.swiper.update();
-        }
     }
 
     removeFile(index) {
         this.selectedFiles.splice(index, 1);
-        this.updatePreview();
-        this.showToast('Photo removed', 'info');
-        
-        // Haptic feedback
-        if ('vibrate' in navigator) {
-            navigator.vibrate(100);
+        this.updatePhotoDisplay();
+        this.updateSwiper();
+        this.showToast('图片已删除', 'success');
+    }
+
+    initializeSwiper() {
+        if (typeof Swiper === 'undefined') {
+            console.warn('Swiper library not loaded');
+            return;
         }
+
+        // Initialize thumbnail swiper first
+        this.thumbsSwiper = new Swiper('.photo-thumbs', {
+            spaceBetween: 10,
+            slidesPerView: 'auto',
+            freeMode: true,
+            watchSlidesProgress: true,
+        });
+
+        // Initialize main swiper
+        this.swiper = new Swiper('.photo-swiper', {
+            spaceBetween: 10,
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            thumbs: {
+                swiper: this.thumbsSwiper,
+            },
+        });
+    }
+
+    updateSwiper() {
+        if (!this.swiper) return;
+
+        // Update main swiper
+        this.elements.swiperWrapper.innerHTML = '';
+        this.selectedFiles.forEach((file, index) => {
+            const slide = document.createElement('div');
+            slide.className = 'swiper-slide';
+            slide.innerHTML = `
+                <div class="slide-content">
+                    <img src="${URL.createObjectURL(file)}" alt="Photo ${index + 1}">
+                    <div class="slide-info">
+                        <h4>图片 ${index + 1}</h4>
+                        <p>${this.formatFileSize(file.size)}</p>
+                    </div>
+                </div>
+            `;
+            this.elements.swiperWrapper.appendChild(slide);
+        });
+
+        // Update thumbnail swiper
+        this.elements.thumbsWrapper.innerHTML = '';
+        this.selectedFiles.forEach((file, index) => {
+            const thumbSlide = document.createElement('div');
+            thumbSlide.className = 'swiper-slide';
+            thumbSlide.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Thumbnail ${index + 1}">`;
+            this.elements.thumbsWrapper.appendChild(thumbSlide);
+        });
+
+        // Update swipers
+        this.swiper.update();
+        if (this.thumbsSwiper) {
+            this.thumbsSwiper.update();
+        }
+
+        // Show/hide swiper container
+        this.elements.photoSwiper.style.display = this.selectedFiles.length > 0 ? 'block' : 'none';
     }
 
     // Form submission
@@ -293,17 +363,36 @@ class MenuTranslator {
         const formData = new FormData();
         
         // Add form fields
-        formData.append('target_language', document.getElementById('targetLanguage').value);
+        const targetLanguageElement = document.getElementById('targetLanguage');
+        const targetLanguageValue = this.languageChoices ? this.languageChoices.getValue(true) : targetLanguageElement.value;
+        formData.append('target_language', targetLanguageValue);
         formData.append('allergy_info', document.getElementById('allergyInfo').value);
-        formData.append('currency', document.getElementById('currency').value);
         
-        // Add images
-        this.selectedFiles.forEach(file => {
-            formData.append('images', file);
+        // Add currency if the field exists
+        const currencyField = document.getElementById('currency');
+        if (currencyField) {
+            formData.append('currency', currencyField.value);
+        }
+        
+        // Add images with iOS compatibility fixes
+        this.selectedFiles.forEach((file, index) => {
+            // iOS Safari fix: Ensure file has proper name and type
+            if (this.isIOS() && (!file.name || file.name === 'image.jpg')) {
+                const timestamp = Date.now();
+                const newFile = new File([file], `menu_image_${timestamp}_${index}.jpg`, {
+                    type: file.type || 'image/jpeg',
+                    lastModified: file.lastModified || Date.now()
+                });
+                formData.append('images', newFile);
+            } else {
+                formData.append('images', file);
+            }
         });
         
+
+        
         this.setLoadingState(true);
-        this.showToast('Analyzing menu...', 'info');
+        this.updateLoadingText('Translating...');
         
         // Retry mechanism
         const maxRetries = 3;
@@ -314,13 +403,23 @@ class MenuTranslator {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes timeout
                 
-                const response = await fetch('/analyze_menu', {
+                // iOS Safari compatibility: Add specific headers and options
+                const fetchOptions = {
                     method: 'POST',
                     body: formData,
                     signal: controller.signal
-                });
+                };
+                
+                // iOS Safari fix: Don't set Content-Type header, let browser set it
+                // iOS Safari fix: Add credentials for CORS
+                if (this.isIOS()) {
+                    fetchOptions.credentials = 'same-origin';
+                    fetchOptions.cache = 'no-cache';
+                }
+                const response = await fetch('/analyze_menu', fetchOptions);
                 
                 clearTimeout(timeoutId);
+                this.updateLoadingText('正在分析菜单...', 'AI正在识别和翻译菜单内容');
                 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
@@ -352,8 +451,13 @@ class MenuTranslator {
                     }
                 }
                 
+                this.updateLoadingText('Translating...');
                 this.currentMenuData = data;
                 this.displayResults(data);
+                
+                // Close loading state immediately after displaying results
+                this.setLoadingState(false);
+                
                 this.showToast('Menu analysis completed successfully!', 'success');
                 
                 // Haptic feedback for success
@@ -410,18 +514,6 @@ class MenuTranslator {
             <div class="summary-card">
                 <h3><i class="fas fa-info-circle"></i> Analysis Summary</h3>
                 <div class="summary-details">
-                    <div class="summary-item">
-                        <span class="label">Target Language:</span>
-                        <span class="value">${data.target_language || 'Not specified'}</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="label">Currency:</span>
-                        <span class="value">${data.currency || 'Not specified'}</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="label">Your Allergies:</span>
-                        <span class="value">${data.user_allergies && data.user_allergies.length > 0 ? data.user_allergies.join(', ') : 'None specified'}</span>
-                    </div>
                     <div class="summary-item">
                         <span class="label">Dishes Found:</span>
                         <span class="value">${data.dishes ? data.dishes.length : 0}</span>
@@ -506,7 +598,6 @@ class MenuTranslator {
                     ${dish.name?.src && dish.name?.src !== dish.name?.translated ? 
                         `<div class="dish-original">${dish.name.src}</div>` : ''}
                 </div>
-                <span class="allergy-badge ${allergyClass}">${allergyText}</span>
             </div>
             
             ${dish.description?.translated ? 
@@ -514,7 +605,7 @@ class MenuTranslator {
             
             <div class="dish-details">
                 <div class="detail-item">
-                    <span class="detail-label">Price</span>
+                    <span class="detail-label">Price: </span>
                     <span class="detail-value">${priceDisplay}</span>
                 </div>
                 <div class="detail-item">
@@ -522,12 +613,8 @@ class MenuTranslator {
                     <span class="detail-value">${ingredients}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Allergens (detected)</span>
+                    <span class="detail-label">Allergens</span>
                     <span class="detail-value">${allergens}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="label">Confidence</span>
-                    <span class="value">${Math.round((dish.confidence || 0) * 100)}%</span>
                 </div>
             </div>
             
@@ -543,8 +630,39 @@ class MenuTranslator {
 
     // Utility methods
     setLoadingState(loading) {
-        this.elements.analyzeBtn.disabled = loading;
-        this.elements.analyzeBtn.classList.toggle('loading', loading);
+        const button = this.elements.analyzeBtn;
+        const spinner = button.querySelector('.loading-spinner');
+        const text = button.querySelector('span');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        
+        button.disabled = loading;
+        button.classList.toggle('loading', loading);
+        
+        if (loading) {
+            text.style.display = 'none';
+            spinner.style.display = 'inline-block';
+            loadingOverlay.style.display = 'flex';
+            // 防止页面滚动
+            document.body.style.overflow = 'hidden';
+        } else {
+            text.style.display = 'inline';
+            spinner.style.display = 'none';
+            loadingOverlay.style.display = 'none';
+            // 恢复页面滚动
+            document.body.style.overflow = '';
+        }
+    }
+
+    updateLoadingText(text, subtext = 'AI analyzing, may take 5-10s') {
+        const loadingText = document.querySelector('.loading-text');
+        const loadingSubtext = document.querySelector('.loading-subtext');
+        
+        if (loadingText) {
+            loadingText.textContent = text;
+        }
+        if (loadingSubtext) {
+            loadingSubtext.textContent = subtext;
+        }
     }
 
     showToast(message, type = 'info') {
@@ -565,23 +683,7 @@ class MenuTranslator {
         }).showToast();
     }
 
-    downloadResults() {
-        if (!this.currentMenuData) {
-            this.showToast('No results to download.', 'error');
-            return;
-        }
-        
-        const dataStr = JSON.stringify(this.currentMenuData, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(dataBlob);
-        link.download = `menu_analysis_${new Date().toISOString().split('T')[0]}.json`;
-        link.click();
-        
-        URL.revokeObjectURL(link.href);
-        this.showToast('Results downloaded successfully!', 'success');
-    }
+
 
     formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
@@ -590,43 +692,29 @@ class MenuTranslator {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
-
-    // Global functions for HTML onclick handlers
+ç
     openCamera() {
-        this.elements.cameraInput.click();
+        if (this.elements.cameraInput) {
+            this.elements.cameraInput.click();
+        }
     }
 
     clearAllPhotos() {
         this.selectedFiles = [];
-        this.updatePreview();
-        this.showToast('All photos cleared', 'info');
+        this.updatePhotoDisplay();
+        this.updateSwiper();
+        this.showToast('所有图片已清除', 'info');
     }
 
     addMorePhotos() {
-        this.elements.fileInput.click();
-    }
-
-    toggleView(view) {
-        this.currentView = view;
-        
-        // Update toggle buttons
-        document.querySelectorAll('.toggle-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-view="${view}"]`).classList.add('active');
-        
-        // Show/hide views
-        if (view === 'grid') {
-            this.elements.photoGrid.style.display = 'grid';
-            this.elements.photoSwiper.style.display = 'none';
-        } else {
-            this.elements.photoGrid.style.display = 'none';
-            this.elements.photoSwiper.style.display = 'block';
+        if (this.elements.fileInput) {
+            this.elements.fileInput.click();
         }
     }
+
+
 }
 
-// Initialize the app when DOM is loaded
 let menuTranslator;
 document.addEventListener('DOMContentLoaded', function() {
     menuTranslator = new MenuTranslator();
@@ -634,17 +722,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Global functions for HTML onclick handlers
 function openCamera() {
-    menuTranslator.openCamera();
+    if (menuTranslator) {
+        menuTranslator.openCamera();
+    }
 }
 
 function clearAllPhotos() {
-    menuTranslator.clearAllPhotos();
+    if (menuTranslator) {
+        menuTranslator.clearAllPhotos();
+    }
 }
 
 function addMorePhotos() {
-    menuTranslator.addMorePhotos();
-}
-
-function toggleView(view) {
-    menuTranslator.toggleView(view);
+    if (menuTranslator && menuTranslator.elements.fileInput) {
+        menuTranslator.elements.fileInput.click();
+    }
 }
