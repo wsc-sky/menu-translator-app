@@ -1,0 +1,453 @@
+{
+  "menu_language": "zh",
+  "target_language": "en",
+  "currency": "CNY",
+  "user_allergies": [
+    "peanut",
+    "shellfish"
+  ],
+  "dishes": [
+    {
+      "dish_id": "1",
+      "name": {
+        "src": "盐菜回锅肉",
+        "translated": "Twice-Cooked Pork with Pickled Vegetables"
+      },
+      "aliases": [],
+      "description": {
+        "src": "咸香可口，肉质鲜嫩。",
+        "translated": "Savory and delicious, with tender meat."
+      },
+      "price": {
+        "amount": 68,
+        "currency": "CNY"
+      },
+      "ingredients": [
+        "pork",
+        "pickled vegetables",
+        "spices"
+      ],
+      "flavor_profile": [
+        "savory",
+        "spicy"
+      ],
+      "dietary": {
+        "contains_allergens": [],
+        "vegetarian": false,
+        "vegan": false,
+        "gluten_free": "unknown",
+        "halal": "unknown"
+      },
+      "kids_friendly": "yes",
+      "spice_level": 2,
+      "allergy_alert": "safe",
+      "confidence": 0.9,
+      "evidence": {
+        "image_refs": [
+          0
+        ],
+        "ocr_spans": [
+          "盐菜回锅肉"
+        ]
+      }
+    },
+    {
+      "dish_id": "2",
+      "name": {
+        "src": "天府水煮鱼",
+        "translated": "Sichuan Boiled Fish"
+      },
+      "aliases": [],
+      "description": {
+        "src": "鲜香麻辣，鱼肉滑嫩。",
+        "translated": "Fragrant and spicy, with tender fish."
+      },
+      "price": {
+        "amount": 88,
+        "currency": "CNY"
+      },
+      "ingredients": [
+        "fish",
+        "spices",
+        "chili oil"
+      ],
+      "flavor_profile": [
+        "spicy",
+        "savory"
+      ],
+      "dietary": {
+        "contains_allergens": [
+          "fish"
+        ],
+        "vegetarian": false,
+        "vegan": false,
+        "gluten_free": "unknown",
+        "halal": "unknown"
+      },
+      "kids_friendly": "caution_spicy",
+      "spice_level": 3,
+      "allergy_alert": "may_contain",
+      "confidence": 0.8,
+      "evidence": {
+        "image_refs": [
+          1
+        ],
+        "ocr_spans": [
+          "天府水煮鱼"
+        ]
+      }
+    },
+    {
+      "dish_id": "3",
+      "name": {
+        "src": "麻辣口水鸡",
+        "translated": "Spicy Mouthwatering Chicken"
+      },
+      "aliases": [],
+      "description": {
+        "src": "麻辣鲜香，鸡肉滑嫩。",
+        "translated": "Spicy and fragrant, with tender chicken."
+      },
+      "price": {
+        "amount": 78,
+        "currency": "CNY"
+      },
+      "ingredients": [
+        "chicken",
+        "spices",
+        "chili oil"
+      ],
+      "flavor_profile": [
+        "spicy",
+        "savory"
+      ],
+      "dietary": {
+        "contains_allergens": [],
+        "vegetarian": false,
+        "vegan": false,
+        "gluten_free": "unknown",
+        "halal": "unknown"
+      },
+      "kids_friendly": "caution_spicy",
+      "spice_level": 3,
+      "allergy_alert": "safe",
+      "confidence": 0.9,
+      "evidence": {
+        "image_refs": [
+          2
+        ],
+        "ocr_spans": [
+          "麻辣口水鸡"
+        ]
+      }
+    },
+    {
+      "dish_id": "4",
+      "name": {
+        "src": "牛蛙炒鸡",
+        "translated": "Stir-Fried Bullfrog with Chicken"
+      },
+      "aliases": [],
+      "description": {
+        "src": "鲜香可口，肉质鲜嫩。",
+        "translated": "Savory and delicious, with tender meat."
+      },
+      "price": {
+        "amount": 75,
+        "currency": "CNY"
+      },
+      "ingredients": [
+        "bullfrog",
+        "chicken",
+        "spices"
+      ],
+      "flavor_profile": [
+        "savory",
+        "spicy"
+      ],
+      "dietary": {
+        "contains_allergens": [],
+        "vegetarian": false,
+        "vegan": false,
+        "gluten_free": "unknown",
+        "halal": "unknown"
+      },
+      "kids_friendly": "yes",
+      "spice_level": 2,
+      "allergy_alert": "safe",
+      "confidence": 0.9,
+      "evidence": {
+        "image_refs": [
+          3
+        ],
+        "ocr_spans": [
+          "牛蛙炒鸡"
+        ]
+      }
+    },
+    {
+      "dish_id": "5",
+      "name": {
+        "src": "土豆片炒肉",
+        "translated": "Stir-Fried Meat with Potato Slices"
+      },
+      "aliases": [],
+      "description": {
+        "src": "香辣可口，肉质鲜嫩。",
+        "translated": "Spicy and delicious, with tender meat."
+      },
+      "price": {
+        "amount": 65,
+        "currency": "CNY"
+      },
+      "ingredients": [
+        "meat",
+        "potato",
+        "spices"
+      ],
+      "flavor_profile": [
+        "spicy",
+        "savory"
+      ],
+      "dietary": {
+        "contains_allergens": [],
+        "vegetarian": false,
+        "vegan": false,
+        "gluten_free": "unknown",
+        "halal": "unknown"
+      },
+      "kids_friendly": "yes",
+      "spice_level": 2,
+      "allergy_alert": "safe",
+      "confidence": 0.9,
+      "evidence": {
+        "image_refs": [
+          4
+        ],
+        "ocr_spans": [
+          "土豆片炒肉"
+        ]
+      }
+    },
+    {
+      "dish_id": "6",
+      "name": {
+        "src": "小炒肉",
+        "translated": "Stir-Fried Pork"
+      },
+      "aliases": [],
+      "description": {
+        "src": "鲜香可口，肉质鲜嫩。",
+        "translated": "Savory and delicious, with tender meat."
+      },
+      "price": {
+        "amount": 70,
+        "currency": "CNY"
+      },
+      "ingredients": [
+        "pork",
+        "spices"
+      ],
+      "flavor_profile": [
+        "savory",
+        "spicy"
+      ],
+      "dietary": {
+        "contains_allergens": [],
+        "vegetarian": false,
+        "vegan": false,
+        "gluten_free": "unknown",
+        "halal": "unknown"
+      },
+      "kids_friendly": "yes",
+      "spice_level": 2,
+      "allergy_alert": "safe",
+      "confidence": 0.9,
+      "evidence": {
+        "image_refs": [
+          5
+        ],
+        "ocr_spans": [
+          "小炒肉"
+        ]
+      }
+    },
+    {
+      "dish_id": "7",
+      "name": {
+        "src": "小炒黄牛肉",
+        "translated": "Stir-Fried Yellow Beef"
+      },
+      "aliases": [],
+      "description": {
+        "src": "鲜香可口，肉质鲜嫩。",
+        "translated": "Savory and delicious, with tender meat."
+      },
+      "price": {
+        "amount": 80,
+        "currency": "CNY"
+      },
+      "ingredients": [
+        "beef",
+        "spices"
+      ],
+      "flavor_profile": [
+        "savory",
+        "spicy"
+      ],
+      "dietary": {
+        "contains_allergens": [],
+        "vegetarian": false,
+        "vegan": false,
+        "gluten_free": "unknown",
+        "halal": "unknown"
+      },
+      "kids_friendly": "yes",
+      "spice_level": 2,
+      "allergy_alert": "safe",
+      "confidence": 0.9,
+      "evidence": {
+        "image_refs": [
+          6
+        ],
+        "ocr_spans": [
+          "小炒黄牛肉"
+        ]
+      }
+    },
+    {
+      "dish_id": "8",
+      "name": {
+        "src": "京酱肉丝",
+        "translated": "Peking Style Shredded Pork"
+      },
+      "aliases": [],
+      "description": {
+        "src": "鲜香可口，肉质鲜嫩。",
+        "translated": "Savory and delicious, with tender meat."
+      },
+      "price": {
+        "amount": 72,
+        "currency": "CNY"
+      },
+      "ingredients": [
+        "pork",
+        "sauce",
+        "spices"
+      ],
+      "flavor_profile": [
+        "savory",
+        "sweet"
+      ],
+      "dietary": {
+        "contains_allergens": [],
+        "vegetarian": false,
+        "vegan": false,
+        "gluten_free": "unknown",
+        "halal": "unknown"
+      },
+      "kids_friendly": "yes",
+      "spice_level": 1,
+      "allergy_alert": "safe",
+      "confidence": 0.9,
+      "evidence": {
+        "image_refs": [
+          7
+        ],
+        "ocr_spans": [
+          "京酱肉丝"
+        ]
+      }
+    },
+    {
+      "dish_id": "9",
+      "name": {
+        "src": "青椒肉丝",
+        "translated": "Shredded Pork with Green Peppers"
+      },
+      "aliases": [],
+      "description": {
+        "src": "鲜香可口，肉质鲜嫩。",
+        "translated": "Savory and delicious, with tender meat."
+      },
+      "price": {
+        "amount": 70,
+        "currency": "CNY"
+      },
+      "ingredients": [
+        "pork",
+        "green peppers",
+        "spices"
+      ],
+      "flavor_profile": [
+        "savory",
+        "spicy"
+      ],
+      "dietary": {
+        "contains_allergens": [],
+        "vegetarian": false,
+        "vegan": false,
+        "gluten_free": "unknown",
+        "halal": "unknown"
+      },
+      "kids_friendly": "yes",
+      "spice_level": 2,
+      "allergy_alert": "safe",
+      "confidence": 0.9,
+      "evidence": {
+        "image_refs": [
+          8
+        ],
+        "ocr_spans": [
+          "青椒肉丝"
+        ]
+      }
+    },
+    {
+      "dish_id": "10",
+      "name": {
+        "src": "毛血旺",
+        "translated": "Spicy Hot Pot with Blood Curd"
+      },
+      "aliases": [],
+      "description": {
+        "src": "麻辣鲜香，口感丰富。",
+        "translated": "Spicy and fragrant, with a rich texture."
+      },
+      "price": {
+        "amount": 90,
+        "currency": "CNY"
+      },
+      "ingredients": [
+        "blood curd",
+        "spices",
+        "meat"
+      ],
+      "flavor_profile": [
+        "spicy",
+        "savory"
+      ],
+      "dietary": {
+        "contains_allergens": [],
+        "vegetarian": false,
+        "vegan": false,
+        "gluten_free": "unknown",
+        "halal": "unknown"
+      },
+      "kids_friendly": "caution_spicy",
+      "spice_level": 3,
+      "allergy_alert": "safe",
+      "confidence": 0.9,
+      "evidence": {
+        "image_refs": [
+          9
+        ],
+        "ocr_spans": [
+          "毛血旺"
+        ]
+      }
+    }
+  ],
+  "notes": [],
+  "request_id": "req_de1f1131311353e927ad4bb9cd1ece59"
+}

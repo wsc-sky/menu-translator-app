@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Menu Translator - AI-Powered Menu Analysis</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="AI-powered menu translation and analysis. Upload photos of foreign menus and get instant translations with detailed dish information.">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Menu Translator">
+    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="msapplication-tap-highlight" content="no">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- App Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-192x192.png">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Modern UI Libraries -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preload" href="script.js" as="script">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-utensils"></i> Menu Translator</h1>
+                <p>Upload photos of foreign menus and get instant translations with detailed dish information</p>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="upload-section">
+                <div class="upload-card">
+                    <!-- Enhanced Upload Area -->
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-content">
+                            <div class="upload-icon-container">
+                                <i class="fas fa-camera upload-icon"></i>
+                                <div class="upload-pulse"></div>
+                            </div>
+                            <h3>Upload Menu Photos</h3>
+                            <p>Drag and drop your menu photos here, or tap to browse</p>
+                            <div class="upload-actions">
+                                <button class="upload-btn primary" onclick="document.getElementById('fileInput').click()">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Choose Photos</span>
+                                </button>
+                                <button class="upload-btn secondary" onclick="openCamera()">
+                                    <i class="fas fa-camera"></i>
+                                    <span>Take Photo</span>
+                                </button>
+                            </div>
+                            <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+                            <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
+                        </div>
+                    </div>
+                    
+                    <!-- Enhanced Photo Preview with Swiper -->
+                    <div class="preview-container" id="previewContainer" style="display: none;">
+                        <div class="preview-header">
+                            <h4><i class="fas fa-images"></i> Selected Photos</h4>
+                            <div class="preview-actions">
+                                <button class="action-btn" onclick="clearAllPhotos()" title="Clear all">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button class="action-btn" onclick="addMorePhotos()" title="Add more">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Swiper Container for Photo Gallery -->
+                        <div class="swiper photo-swiper" id="photoSwiper">
+                            <div class="swiper-wrapper" id="swiperWrapper">
+                                <!-- Photos will be dynamically added here -->
+                            </div>
+                            <div class="swiper-pagination"></div>
+                            <div class="swiper-button-next"></div>
+                            <div class="swiper-button-prev"></div>
+                        </div>
+                        
+                        <!-- Photo Grid View -->
+                        <div class="photo-grid" id="photoGrid">
+                            <!-- Photos will be dynamically added here -->
+                        </div>
+                        
+                        <!-- View Toggle -->
+                        <div class="view-toggle">
+                            <button class="toggle-btn active" data-view="grid" onclick="toggleView('grid')">
+                                <i class="fas fa-th"></i>
+                            </button>
+                            <button class="toggle-btn" data-view="swiper" onclick="toggleView('swiper')">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <form id="menuForm" class="menu-form">
+                        <div class="form-group">
+                            <label for="targetLanguage">
+                                <i class="fas fa-language"></i> Target Language
+                            </label>
+                            <select id="targetLanguage" name="targetLanguage" required>
+                                <option value="en">English</option>
+                                <option value="es">Spanish</option>
+                                <option value="fr">French</option>
+                                <option value="de">German</option>
+                                <option value="it">Italian</option>
+                                <option value="pt">Portuguese</option>
+                                <option value="ja">Japanese</option>
+                                <option value="ko">Korean</option>
+                                <option value="zh">Chinese</option>
+                                <option value="ar">Arabic</option>
+                                <option value="hi">Hindi</option>
+                                <option value="ru">Russian</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="allergyInfo">
+                                <i class="fas fa-exclamation-triangle"></i> Allergies (Optional)
+                            </label>
+                            <input type="text" id="allergyInfo" name="allergyInfo" 
+                                   placeholder="e.g., peanut, shellfish, dairy">
+                            <small>Comma-separated list of your allergies</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="currency">
+                                <i class="fas fa-dollar-sign"></i> Currency (Optional)
+                            </label>
+                            <select id="currency" name="currency">
+                                <option value="">Select Currency</option>
+                                <option value="USD">USD - US Dollar</option>
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="GBP">GBP - British Pound</option>
+                                <option value="CNY">CNY - Chinese Yuan</option>
+                                <option value="JPY">JPY - Japanese Yen</option>
+                                <option value="KRW">KRW - Korean Won</option>
+                                <option value="INR">INR - Indian Rupee</option>
+                                <option value="CAD">CAD - Canadian Dollar</option>
+                                <option value="AUD">AUD - Australian Dollar</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="analyze-btn" id="analyzeBtn">
+                            <i class="fas fa-magic"></i>
+                            <span>Analyze Menu</span>
+                            <div class="loading-spinner" style="display: none;">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </div>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-header">
+                    <h2><i class="fas fa-list-alt"></i> Menu Analysis Results</h2>
+                    <button class="download-btn" id="downloadBtn">
+                        <i class="fas fa-download"></i> Download JSON
+                    </button>
+                </div>
+                <div class="results-content" id="resultsContent"></div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 Menu Translator. Powered by AI technology.</p>
+        </footer>
+    </div>
+
+    <!-- PWA Install Prompt -->
+    <div id="installPrompt" class="install-prompt" style="display: none;">
+        <div class="install-prompt-content">
+            <div class="install-prompt-icon">
+                <i class="fas fa-download"></i>
+            </div>
+            <div class="install-prompt-text">
+                <h3>Install Menu Translator</h3>
+                <p>Add to your home screen for quick access</p>
+            </div>
+            <div class="install-prompt-actions">
+                <button id="installBtn" class="install-btn">Install</button>
+                <button id="dismissInstall" class="dismiss-btn">Later</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Offline Indicator -->
+    <div id="offlineIndicator" class="offline-indicator" style="display: none;">
+        <i class="fas fa-wifi"></i>
+        <span>You're offline. Some features may be limited.</span>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    
+    <script src="script.js"></script>
+    <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        const installPrompt = document.getElementById('installPrompt');
+        const installBtn = document.getElementById('installBtn');
+        const dismissInstall = document.getElementById('dismissInstall');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installPrompt.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                deferredPrompt = null;
+                installPrompt.style.display = 'none';
+            }
+        });
+
+        dismissInstall.addEventListener('click', () => {
+            installPrompt.style.display = 'none';
+        });
+
+        // Online/Offline Status
+        const offlineIndicator = document.getElementById('offlineIndicator');
+        
+        window.addEventListener('online', () => {
+            offlineIndicator.style.display = 'none';
+        });
+
+        window.addEventListener('offline', () => {
+            offlineIndicator.style.display = 'block';
+        });
+
+        // Check initial online status
+        if (!navigator.onLine) {
+            offlineIndicator.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
