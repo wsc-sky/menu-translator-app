@@ -16,9 +16,12 @@ RUN apt-get update && apt-get install -y \
 # 复制requirements文件
 COPY requirements.txt .
 
+# Force cache invalidation for dependency installation
+ARG CACHEBUST=1
+
 # 安装Python依赖
 RUN pip install --no-cache-dir --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --force-reinstall -r requirements.txt
 
 # 复制应用代码
 COPY . .
